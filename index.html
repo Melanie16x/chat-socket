@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      body {
+        margin: 0;
+        padding-bottom: 3rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+
+      #form {
+        background: rgb(0, 5, 32);
+        padding: 0.25rem;
+        position: fixed;
+        bottom: 0;
+        left: 8%;
+        right: 0;
+        display: flex;
+        height: 3rem;
+        box-sizing: border-box;
+        backdrop-filter: blur(10px);
+        width: 85%;
+        border-radius: 10px;
+      }
+      #input {
+        border: none;
+        padding: 0 1rem;
+        flex-grow: 1;
+        border-radius: 2rem;
+        margin: 0.25rem;
+      }
+      #input:focus {
+        outline: none;
+      }
+      #form > button {
+        background: #333;
+        border: none;
+        padding: 0 1rem;
+        margin: 0.25rem;
+        border-radius: 3px;
+        outline: none;
+        color: #fff;
+      }
+
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .own-message {
+        text-align: right;
+        background-color: #c6e9c6; /* Cambia el fondo a tu preferencia */
+        padding: 15px;
+        margin: 20px;
+        border-radius: 20px;
+      }
+
+      p {
+        color: blue;
+        font-weight: bold;
+      }
+
+      .other-message {
+        text-align: left;
+        background-color: #e3e3e3; /* Cambia el fondo a tu preferencia */
+        padding: 15px;
+        margin: 20px;
+        border-radius: 20px;
+      }
+      .main-table {
+        overflow: auto;
+
+        height: 90vh;
+      }
+    </style>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="container shadow main-table">
+      <div class="w-100 bg-dark p-3 d-flex flex-wrap rounded">
+        <p id="user" class="text-white px-5 fw-bold"></p>
+        <span id="username-display" class="text-white"></span>
+      </div>
+      <ul id="messages"></ul>
+
+      <form id="form" action="">
+        <input id="input" autocomplete="off" />
+        <button>Send</button>
+      </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const usuario = prompt("Ingrese su nombre de Usuario, por favor");
+      const input = document.getElementById("input");
+      const usernameDisplay = document.getElementById("username-display");
+      const messages = document.getElementById("messages");
+      const form = document.getElementById("form");
+      const user = document.getElementById("user");
+      user.textContent = `Usuario: ${usuario}`;
+      window.scrollTo(0, document.body.scrollHeight);
+
+      const socket = io();
+
+      socket.emit("user connected", usuario);
+
+      // ffr-fffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+      const mostrarHistorialMensajes = (messagesList) => {
+        messagesList.forEach((messagesList) => {
+          const container = document.createElement("div"); // Contenedor para el nombre de usuario y el mensaje
+          const nombre = document.createElement("p");
+          const item = document.createElement("li");
+          nombre.textContent = `${messagesList.user}`;
+          item.textContent = `${messagesList.msg}`;
+
+          container.appendChild(nombre); // Agregar el nombre de usuario al contenedor
+          container.appendChild(item); // Agregar el mensaje al contenedor
+
+          if (user === usuario) {
+            container.classList.add("own-message");
+          } else {
+            container.classList.add("other-message");
+          }
+
+          messages.appendChild(container); // Agregar el contenedor a la lista
+        });
+        window.scrollTo(0, document.body.scrollHeight);
+      };
+
+      const nuevoMensaje = (messagesList) => {
+        const ultimoMensaje = messagesList[messagesList.length - 1];
+        const container = document.createElement("div"); // Contenedor para el nombre de usuario y el mensaje
+        const nombre = document.createElement("p");
+        const item = document.createElement("li");
+        nombre.textContent = `${ultimoMensaje.user}`;
+        item.textContent = `${ultimoMensaje.msg}`;
+
+        container.appendChild(nombre); // Agregar el nombre de usuario al contenedor
+        container.appendChild(item); // Agregar el mensaje al contenedor
+
+        if (ultimoMensaje.user === usuario) {
+          container.classList.add("own-message");
+        } else {
+          container.classList.add("other-message");
+        }
+
+        messages.appendChild(container); // Agregar el contenedor a la lista
+        window.scrollTo(0, document.body.scrollHeight);
+      };
+
+      // ffr-fffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+      // Función para mostrar el nombre de usuario
+      const showUsername = (username) => {
+        usernameDisplay.textContent = `${username} está escribiendo...`;
+      };
+
+      // Función para ocultar el nombre de usuario después de 3 segundos de inactividad
+      const hideUsername = () => {
+        usernameDisplay.textContent = "";
+      };
+
+      // Escucha el evento "input" en el campo de entrada
+      input.addEventListener("keydown", (event) => {
+        // Emitir un evento al servidor
+        socket.emit("key pressed");
+      });
+
+      const mostrarArray = (msg) => {
+        msg.map((element, index) => {
+          var item = document.createElement("li");
+          item.textContent = element.user;
+          item.id = `message-${index}`; // Asigna un id único
+          messages.appendChild(item);
+          window.scrollTo(0, document.body.scrollHeight);
+        });
+      };
+
+      const mostrarMensaje = (user, msg) => {
+        const container = document.createElement("div"); // Contenedor para el nombre de usuario y el mensaje
+        const nombre = document.createElement("p");
+        const item = document.createElement("li");
+
+        nombre.textContent = `${user}`;
+        item.textContent = `${msg}`;
+
+        container.appendChild(nombre); // Agregar el nombre de usuario al contenedor
+        container.appendChild(item); // Agregar el mensaje al contenedor
+
+        if (user === usuario) {
+          container.classList.add("own-message");
+        } else {
+          container.classList.add("other-message");
+        }
+
+        messages.appendChild(container); // Agregar el contenedor a la lista
+        window.scrollTo(0, document.body.scrollHeight);
+      };
+
+      //Logica del formulario
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (input.value) {
+          socket.emit("chat message", input.value);
+          input.value = "";
+        }
+      });
+
+      // Logica para mostrar historial de mensajes
+      if ("connection") {
+        socket.on("historial", function (messagesList) {
+          mostrarHistorialMensajes(messagesList);
+        });
+      }
+      // Logica para recibir nuevos mensajes
+      socket.on("chat message", function (messagesList) {
+        nuevoMensaje(messagesList);
+      });
+
+      socket.on("key pressed", (username) => {
+        if (username !== usuario) {
+          showUsername(username);
+          window.scrollTo(0, document.body.scrollHeight);
+          // Establecer un temporizador para eliminar el mensaje después de 1 segundo
+          setTimeout(() => {
+            usernameDisplay.textContent = "";
+          }, 1000);
+        }
+      });
+    </script>
+  </body>
+</html>
